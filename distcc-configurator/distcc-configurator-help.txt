@@ -1,0 +1,10 @@
+The usage of distcc-configurator is quite simple. Instead of adding the distccd using "rc-update add distccd default"
+to the default runlevel, you have to add distcc-configurator with "rc-update add distcc-configurator default"
+
+now you can start and stop distcc and the configurator via the commands
+	distcc-configurator start
+	distcc-configurator stop
+	distcc-configurator restart
+	distcc-configurator reconfigure
+
+the reconfigure option is used if you want to restart and reconfiguring all computers where distcc-configurator is started
