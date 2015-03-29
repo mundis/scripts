@@ -1,0 +1,2 @@
+nc -l -v -p 3633 > /etc/distcc/hosts
+/etc/init.d/distcc-configurator restart
