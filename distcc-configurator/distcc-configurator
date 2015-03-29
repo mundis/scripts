@@ -14,7 +14,7 @@ start() {
   ebegin "configuring distcc hosts"
 	test_firstrun
 	ebegin "starting distcc-config-listener"
-		start-stop-daemon --start --make-pidfile --exec /usr/local/bin/listener --background \
+		start-stop-daemon --start --make-pidfile --exec /usr/bin/listener --background \
 			--pidfile /etc/distcc/listener.pid
 	eend $?
 	echo ${NEW_HOSTS} > /etc/distcc/hosts	
@@ -23,7 +23,7 @@ start() {
 
 stop() {
 	ebegin "stopping distcc-configurator"
-    start-stop-daemon --stop --exec /usr/local/bin/listener \
+    start-stop-daemon --stop --exec /usr/bin/listener \
       --pidfile /etc/distcc/listener.pid
   eend $?
 	/etc/init.d/distccd stop
