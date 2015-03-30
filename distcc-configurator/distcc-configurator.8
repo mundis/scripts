@@ -1,0 +1,35 @@
+.TH DISTCC-CONFIGURATOR 8
+.SH NAME
+distcc-configurator \- configuring all avaiable distcc hosts
+.SH SYNOPSIS
+.B /etc/init.d/distcc-configurator
+[start|stop|restart|reconfigure]
+.SH DESCRIPTION
+.B distcc-configurator
+configuring all avaiable distcc hosts \@ boot if you have it added to the default run-level 
+.br
+.SH HOW DOES IT WORKS
+The distcc-configurator starts a nmap scan that search all computers with a listening distccd on standard distcc port 3632
+.br
+Now a bawlwer sends a list of IP-Addresses with all computers listening on port 3632
+.br
+The distcc-configurator starts a listener on port 3633
+.br
+This listener based on netcat command nc awaits a list of IP Addresses
+.br
+If such a string would be sent
+the listener write the IP's in the /etc/distcc/hosts file, close the session and restart distcc-configurator.
+.br
+Now distcc-configurator restarts the distccd. 
+.br
+.SH IMPORTANT
+.PP
+You have to REMOVE distccd from  default run-level
+.br
+Add instead distcc-configurator to default run-level.
+.br
+It will start|stop|restart the distccd
+.br
+The reconfigure option allows you to start a new configuration of all computers listening on port 3633
+.br
+If you only want to restart your distcc-configurator and distccd use restart
