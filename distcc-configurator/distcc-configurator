@@ -1,23 +1,22 @@
 #!/sbin/runscript
 
-extra_commands="reconfigure"
 ADDRESS=$(ifconfig | grep netmask | sed -ne '1p' | awk '{print $2}')
 NETMASK=$(ifconfig | grep netmask | sed -ne '1p' | awk '{print $4}')
 NETWORK=$(ipcalc ${ADDRESS}/${NETMASK} | grep Network | awk '{print $2}')
 
 depend() {
   need net
-  before distccd
 }
 
 start() {
   ebegin "configuring distcc hosts"
 	test_firstrun
+	configure
 	ebegin "starting distcc-config-listener"
 		start-stop-daemon --start --make-pidfile --exec /usr/bin/listener --background \
 			--pidfile /etc/distcc/listener.pid
 	eend $?
-	/etc/init.d/distccd restart
+	/etc/init.d/distccd start
 }
 
 stop() {
@@ -25,17 +24,15 @@ stop() {
     start-stop-daemon --stop --exec /usr/bin/listener \
       --pidfile /etc/distcc/listener.pid
   eend $?
-	/etc/init.d/distccd stop
+  /etc/init.d/distccd stop
 }
 
 test_firstrun() {
 	if ! [ -f /tmp/distconfigurator.lock ];then
 		touch /tmp/distconfigurator.lock
 		backup_config
-		write_config
+		write_config	
 		add_netrange
-		calculate_hosts
-		bawler
 	fi
 }
 
@@ -81,11 +78,9 @@ backup_config() {
 		if [ $? -eq 0 ];then mv /etc/conf.d/distccd /etc/conf.d/distccd.gentoo.org;fi
 }
 
-reconfigure() {
+configure() {
 	ebegin "reconfiguring distcc hosts"
 	calculate_hosts
 	bawler
-  echo reconfigure >/tmp/reason
 	echo ${NEW_HOSTS} > /etc/distcc/hosts
-	/etc/init.d/distccd restart
 }
