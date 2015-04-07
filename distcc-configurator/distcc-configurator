@@ -17,7 +17,6 @@ start() {
 		start-stop-daemon --start --make-pidfile --exec /usr/bin/listener --background \
 			--pidfile /etc/distcc/listener.pid
 	eend $?
-	echo ${NEW_HOSTS} > /etc/distcc/hosts	
 	/etc/init.d/distccd restart
 }
 
@@ -86,6 +85,7 @@ reconfigure() {
 	ebegin "reconfiguring distcc hosts"
 	calculate_hosts
 	bawler
-	echo ${NEW_HOSTS} > /etc/distcc/hosts	
+  echo reconfigure >/tmp/reason
+	echo ${NEW_HOSTS} > /etc/distcc/hosts
 	/etc/init.d/distccd restart
 }
