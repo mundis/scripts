@@ -32,7 +32,7 @@ test_firstrun() {
 	if ! [ -f /tmp/distconfigurator.lock ];then
 		touch /tmp/distconfigurator.lock
 		backup_config
-		write_config	
+		write_config
 		add_netrange
 		calculate_hosts
 		bawler
