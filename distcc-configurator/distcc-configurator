@@ -1,5 +1,6 @@
 #!/sbin/runscript
 
+RC_REBOOT="NO"
 ADDRESS=$(ifconfig | grep netmask | sed -ne '1p' | awk '{print $2}')
 NETMASK=$(ifconfig | grep netmask | sed -ne '1p' | awk '{print $4}')
 NETWORK=$(ipcalc ${ADDRESS}/${NETMASK} | grep Network | awk '{print $2}')
@@ -9,9 +10,11 @@ depend() {
 }
 
 start() {
-  ebegin "configuring distcc hosts"
-	test_firstrun
-	configure
+	firstrun
+	if ! [ ${RC_CMD} == "restart" ] || ! [ ${RC_REBOOT} == "YES" ];then
+		ebegin "configuring distcc hosts"
+		configure
+	fi
 	ebegin "starting distcc-config-listener"
 		start-stop-daemon --start --make-pidfile --exec /usr/bin/listener --background \
 			--pidfile /etc/distcc/listener.pid
@@ -20,18 +23,22 @@ start() {
 }
 
 stop() {
+	if [ ${RC_RUNLEVEL} == "shutdown" ] && ! [ ${RC_REBOOT} == "YES" ];then rm /etc/distcc/lock;fi
 	ebegin "stopping distcc-configurator"
+  if ! [ ${RC_CMD} == "restart" ] || ! [ ${RC_REBOOT} == "YES" ];then
+		configure
+	fi
     start-stop-daemon --stop --exec /usr/bin/listener \
       --pidfile /etc/distcc/listener.pid
   eend $?
   /etc/init.d/distccd stop
 }
 
-test_firstrun() {
-	if ! [ -f /tmp/distconfigurator.lock ];then
-		touch /tmp/distconfigurator.lock
+firstrun() {
+	if ! [ -f /etc/distcc/lock ];then
+		touch /etc/distcc/lock
 		backup_config
-		write_config	
+		write_config
 		add_netrange
 	fi
 }
@@ -64,11 +71,10 @@ add_netrange() {
 
 calculate_hosts() {
 	HOSTS_NEW=$(nmap -oG - -sT -p 3632 ${NETWORK} |grep open | awk '{print $2 " "}' | tr -d \\012)
-	rc-status | grep distccd | grep started
-	if [ $? -eq 0 ];then 
-		NEW_HOSTS="${HOSTS_NEW}"
-	else
+	if [ ${RC_CMD} == "start" ];then
 		NEW_HOSTS="${ADDRESS} ${HOSTS_NEW}"
+	elif [ ${RC_CMD} == "stop" ];then
+		NEW_HOSTS=`echo ${HOSTS_NEW} | sed "s/${ADDRESS}//g" | sed 's/^[ \t]*//;s/[ \t]*$//'`
 	fi
 	HOSTS=(${NEW_HOSTS})
 }
@@ -79,8 +85,8 @@ backup_config() {
 }
 
 configure() {
-	ebegin "reconfiguring distcc hosts"
-	calculate_hosts
-	bawler
-	echo ${NEW_HOSTS} > /etc/distcc/hosts
+	if ! [ ${RC_CMD} == "restart" ] || ! [ ${RC_REBOOT} == "YES" ];then
+		calculate_hosts
+		bawler
+	fi
 }
