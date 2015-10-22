@@ -1,0 +1,31 @@
+#!/sbin/runscript
+
+depend() {
+	before xdm
+}
+
+start() {
+	eval $(/opt/bin/fll_xserver_discover 2>/dev/null)
+	if [ "${XVENDOR}" = "10de" ];then
+		sh /opt/bin/nvidia-linker.sh
+                modprobe -r nvidia
+                modprobe nvidia 2>/dev/null
+                if [ $? -eq 0 ];then 
+			echo NVIDIA 3D wird installiert
+			eselect opengl set nvidia
+			/opt/bin/nvidia-xconfig
+		fi
+	elif [ "${XVENDOR}" = "1002" ];then
+		echo ATI 3D wird installiert
+				modprobe -r fglrx
+				modprobe fglrx 2>/dev/null
+				if [ $? -eq 0 ];then
+					eselect opengl set ati
+					/opt/bin/aticonfig --initial
+				else
+					modprobe drm
+					modprobe drm-kms-helper
+					modprobe radeon
+				fi
+	fi
+}
