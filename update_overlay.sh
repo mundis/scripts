@@ -19,7 +19,7 @@ and use the following commands
 EOF
 dirname `find -name *.ebuild | sed 's/\.\///g'` | uniq > ../ebuild_list.txt
 count=1;while read line; do EBUILD[count]=$line;count=$[count+1]; done < ../ebuild_list.txt
-grep -h DESCRIPTION `find -name *.ebuild` | sed 's/DESCRIPTION=//g' | sed 's/"//g' | uniq > ../description_list.txt
+grep -h DESCRIPTION= `find -name *.ebuild` | sed 's/DESCRIPTION=//g' | sed 's/"//g' | uniq > ../description_list.txt
 count=1;while read line; do DESCRIPTION[count]=$line;count=$[count+1]; done < ../description_list.txt
 
 
