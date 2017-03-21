@@ -1,31 +1,56 @@
-#!/sbin/runscript
+#!/sbin/openrc-run
 
 depend() {
 	before xdm
 }
 
+DIR=/opt/nvidia
+
+#################################################################################################################################
+link_delete() {
+	count=1;while read line; do DRIVERFILES[count]=$line;count=$[count+1]; done < ${DIR}/${DRIVER}/${DRIVER}-files
+	for m in $(seq 1 $[count-1]);do rm -f ${DRIVERFILES[m]};done
+}
+#################################################################################################################################
+linker() {
+	link_delete
+	count=1;while read line; do DRIVERFOLDERS[count]=$line;count=$[count+1]; done < ${DIR}/${DRIVER}/${DRIVER}-folders
+	for l in $(seq 1 $[count-1]);do mkdir -p ${DRIVERFOLDERS[l]};done
+	count=1;while read line; do DRIVERFILES[count]=$line;count=$[count+1]; done < ${DIR}/${DRIVER}/${DRIVER}-files
+	for l in $(seq 1 $[count-1]);do ln -s ${DIR}/$DRIVER${DRIVERFILES[l]} ${DRIVERFILES[l]};done
+}
+#################################################################################################################################
+prepare_driver() {
+	for ((i=${#DRIVERS[@]}-1; i>=0; i--));do
+		DRIVER=${DRIVERS[i]}
+		linker
+		modprobe -r nvidia 2>/dev/null
+		modprobe nvidia 2>/dev/null
+		if [ $? -eq 0 ];then
+			IS_SUPPORTED=1;break
+		else ((j++))
+		fi
+	done
+	if [ ${IS_SUPPORTED} -eq 1 ];then
+		echo -e "NVIDIA Driver ${DRIVER} loaded"
+		eselect opengl set nvidia
+		eselect opencl set nvidia
+		/opt/bin/nvidia-xconfig 2>&1 >/dev/null
+	else
+		modprobe nouveau;echo -e "Card is too old\nUsing Free Driver Nouveau"
+	fi 
+}
+
+#################################################################################################################################
 start() {
 	eval $(/opt/bin/fll_xserver_discover 2>/dev/null)
 	if [ "${XVENDOR}" = "10de" ];then
-		sh /opt/bin/nvidia-linker.sh
-                modprobe -r nvidia
-                modprobe nvidia 2>/dev/null
-                if [ $? -eq 0 ];then 
-			echo NVIDIA 3D wird installiert
-			eselect opengl set nvidia
-			/opt/bin/nvidia-xconfig
-		fi
+		j=0
+		for i in ${DIR}/*;do DRIVERS[j]=${i##${DIR}/};((j++));done
+		prepare_driver
 	elif [ "${XVENDOR}" = "1002" ];then
-		echo ATI 3D wird installiert
-				modprobe -r fglrx
-				modprobe fglrx 2>/dev/null
-				if [ $? -eq 0 ];then
-					eselect opengl set ati
-					/opt/bin/aticonfig --initial
-				else
-					modprobe drm
-					modprobe drm-kms-helper
-					modprobe radeon
-				fi
+			modprobe drm
+			modprobe drm-kms-helper
+#			modprobe radeon 2>/dev/null
 	fi
 }

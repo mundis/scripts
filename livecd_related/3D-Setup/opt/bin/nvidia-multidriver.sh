@@ -1,6 +1,6 @@
 #!/bin/bash
 
-DRIVERS=(305 341 356)
+DRIVERS=(305 341 latest)
 MASK_FILE=/etc/portage/package.unmask
 DIR=/opt/nvidia
 
@@ -36,13 +36,13 @@ move_driver() {
 #			MAIN
 ############################################################################################################################################################################
 rm -rf ${DIR}/*
-grep nvidia-drivers /etc/portage/package.mask/package.mask
+grep nvidia-drivers /etc/portage/package.mask/package.mask > /dev/null 2>&1
 if ! [ $? -eq 0 ];then echo x11-drivers/nvidia-drivers >> /etc/portage/package.mask/package.mask;fi
 for i in $(seq 0 $((${#DRIVERS[*]} -1 )));do
 	DRIVER=${DRIVERS[i]}
 	delete_mask
 	echo "<x11-drivers/nvidia-drivers-${DRIVER}" >> ${MASK_FILE}
-	if [ ${DRIVER} == latest ];then delete_mask;fi
+	if [ ${DRIVER} == latest ];then delete_mask;echo "x11-drivers/nvidia-drivers" >> ${MASK_FILE};fi
 	emerge nvidia-drivers
 	dispatch-conf
 	get_version
