@@ -33,7 +33,7 @@ valid_homedirs() {
 }
 
 my_home() {
-        read -p "Make your choice" choice
+        read -rep $'Make your choice\n\n' choice
 	case "$choice" in
 		''|*[!0-9]*)	echo -e "\n\ninvalid input\n\n";my_home;;
 		*)		if [ $choice -lt ${#VALID_HOME[*]} ];then MYHOME=${VALID_HOME[choice]};fi;;
@@ -43,9 +43,9 @@ my_home() {
 	USERNAME=${TEMP[TEMPMAX]}
 	mkdir /home/${USERNAME}
 	mount --bind ${MYHOME} /home/${USERNAME}
-	USERID=(`stat -c %u MYHOME`)
-	GROUPID=(`stat -c %g MYHOME`)
-	CREATE_OPTION="-d /home/${USERNAME} -u ${USERID} -U -g ${GROUPID}"
+	USERID=(`stat -c %u ${MYHOME}`)
+	GROUPID=(`stat -c %g ${MYHOME}`)
+	CREATE_OPTION="-d /home/${USERNAME} -u ${USERID} -U"
 }
 
 choose_homedir() {
@@ -59,7 +59,7 @@ choose_homedir() {
 
 ask_for_persistence() {
         echo -e "\n\n"
-        read -p "Use existing home (y/n)?" choice
+        read -rep $'Use existing home (y/n)?\n\n' choice
         case "$choice" in
                 y|Y|n|N)	PERSISTENCE=$choice;;
                 *)      	echo "invalid input";;
@@ -74,7 +74,8 @@ set_passwords() {
 }
 
 add_user() {
-	useradd ${CREATE_OPTION} -G users,wheel,audio,cdrom,video,usb,plugdev,wireshark,scanner,games,kvm,vboxguest,lp,lpadmin -s /bin/bash ${USERNAME}
+	USER_GROUPS="users,wheel,audio,cdrom,video,usb,plugdev,wireshark,scanner,games,kvm,vboxguest,vboxusers,uucp,sddm,lp,lpadmin,kismet"
+	useradd ${CREATE_OPTION} -G ${USER_GROUPS} -s /bin/bash ${USERNAME}
 }
 
 start() {
