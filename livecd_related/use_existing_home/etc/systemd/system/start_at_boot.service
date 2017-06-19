@@ -1,0 +1,10 @@
+[Unit]
+Description=Scripts that have to start at boot
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+ExecStart=/usr/local/bin/start_at_boot.sh
+
+[Install]
+WantedBy=multi-user.target
